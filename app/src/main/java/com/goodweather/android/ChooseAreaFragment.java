@@ -1,6 +1,7 @@
 package com.goodweather.android;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 import com.goodweather.android.db.City;
 import com.goodweather.android.db.County;
 import com.goodweather.android.db.Province;
+import com.goodweather.android.gson.Weather;
 import com.goodweather.android.util.HttpUtil;
 import com.goodweather.android.util.Utility;
 
@@ -29,7 +31,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class Choose_AreaFragment extends Fragment {
+public class ChooseAreaFragment extends Fragment {
 
     public static final int LEVEL_PROVINCE=0;
 
@@ -64,7 +66,7 @@ public class Choose_AreaFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState){
-        View view=inflater.inflate(R.layout.activity_choose_area,container,false);
+        View view=inflater.inflate(R.layout.choose_area,container,false);
         titleText=(TextView)view.findViewById(R.id.title_text);
         backButton=(Button)view.findViewById(R.id.back_button);
         listView=(ListView)view.findViewById(R.id.list_view);
@@ -86,6 +88,19 @@ public class Choose_AreaFragment extends Fragment {
                 }else if (currentLevel==LEVEL_CITY){
                     selectedCity=cityList.get(position);
                     queryCounties();
+                }else if (currentLevel==LEVEL_COUNTY) {
+                    String weatherId = countyList.get(position).getWeatherId();
+                    if (getActivity() instanceof MainActivity) {
+                        Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                        intent.putExtra("weather_id", weatherId);
+                        startActivity(intent);
+                        getActivity().finish();
+                    } else if (getActivity() instanceof WeatherActivity) {
+                        WeatherActivity activity = (WeatherActivity) getActivity();
+                        activity.drawerLayout.closeDrawers();
+                        activity.swipeRefresh.setRefreshing(true);
+                        activity.requestWeather(weatherId);
+                    }
                 }
             }
         });
@@ -135,6 +150,7 @@ public class Choose_AreaFragment extends Fragment {
         }else {
             int provinceCode=selectedProvince.getProvinceCode();
             String address="http://guolin.tech/api/china/"+provinceCode;
+            queryFromServer(address, "city");
         }
     }
 
@@ -221,3 +237,5 @@ public class Choose_AreaFragment extends Fragment {
 
 
 }
+
+
